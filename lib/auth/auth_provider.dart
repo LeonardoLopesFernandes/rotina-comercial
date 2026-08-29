@@ -34,9 +34,14 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> setAuthenticated(String newToken) async {
-    await Session.saveToken(newToken);
-    setAuthToken(newToken);
-    _token = newToken;
+    // Preserva um token já renovado pelo BFF via Set-Cookie (interceptor),
+    // caso contrário usa o token recém-recebido.
+    final current = getAuthToken();
+    final tokenToUse =
+        (current != null && current.isNotEmpty) ? current : newToken;
+    await Session.saveToken(tokenToUse);
+    setAuthToken(tokenToUse);
+    _token = tokenToUse;
     _autoLogin = false;
     _state = AuthState.authenticated;
     notifyListeners();

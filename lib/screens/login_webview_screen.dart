@@ -9,8 +9,7 @@ import 'package:rotina_comercial/utils/toast.dart';
 import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-const String _loginUrl =
-    'https://login.microsoftonline.com/e316d1ac-42c8-4d30-817c-12c7a71f8ab2/saml2?SAMLRequest=nVNNj9owFPwrke9OYhOSYAErCqqKtG0R0B56qYzzslj1B%2FVztnR%2FfUWAlkN3D1z9RjPjefPGD0drkmcIqL2bEJbm5GE6RmnNQcy6uHdr%2BNkBxuRojUPRDyakC054iRqFkxZQRCU2s4%2BPgqe5OAQfvfKGJMvFhHyHBkBxqNshG6q6kLypRyT5ehXkaU6SJWIHS4dRujghPOclzSvK%2BDbPxaASwzotOf9GktWF%2Bp12jXZPb%2FvYnUEoPmy3K7r6vNmSZAEYtZOxl97HeECRZcY%2FaZdarYJH30bvjHaQKm8zGLCyYVLRgquaFs0gpzWrFGVcVbJibS13PDtFwkkyQ4RwIp57h52FsIHwrBV8WT%2F%2Bk0JDZRf3PuiX3kQqLQStpJOYap8Ff3JHlbcQlJYmU9KYnVQ%2FyHklog8q3Ozi7Qjk1ROZjhqm8roBOhqWFS12dUlHOS9o0Y5aroZFycrdOLsRuZbgk7SwXKy80er3PSV474OV8XU0S1n%2Fohva9lABVmoza5oAiCSZGeN%2FzQPICBMSQwcku1q7VBOavqhz7yIc7yrq3NuDDBpPrYCjVPGa9y3x3EjENbT3pP8mTAl1ogYUncMDKN1qaC67%2BJ%2BB6Xn2yv%2F%2FTm%2Bvd%2FoH';
+const String _loginUrl = 'https://sl-authorization.americanas.io/rotina-comercial';
 
 const String _appBase = 'https://rotina-comercial.americanas.io';
 

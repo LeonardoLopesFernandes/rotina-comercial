@@ -66,8 +66,10 @@ class _LoginTokenScreenState extends State<LoginTokenScreen> {
       final status = e.response?.statusCode;
       if (status == 403 || status == 401) {
         showToast(
-            'Token inválido ou acesso negado. Confira se é o token rc-newToken '
-            'completo (vem do cookie após o login no site).',
+            'Token inválido/acesso negado. O token do site é temporário e '
+            'rotaciona a cada requisição: copie um token NOVO do DevTools '
+            '(cookie rc-newToken) logo antes de colar aqui. Evite deixar o '
+            'site aberto, pois ele renova o token e invalida o anterior.',
             true);
       } else if (status == 500) {
         showToast('Erro no servidor (500). Tente novamente.', true);

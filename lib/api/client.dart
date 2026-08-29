@@ -56,6 +56,25 @@ final Dio apiClient = Dio(BaseOptions(
   },
 ));
 
+void _refreshTokenFromHeaders(Headers? headers) {
+  if (headers == null) return;
+  final setCookie = headers['set-cookie'];
+  if (setCookie == null) return;
+  for (final cookie in setCookie) {
+    final idx = cookie.indexOf('rc-newToken=');
+    if (idx >= 0) {
+      var value = cookie.substring(idx + 'rc-newToken='.length);
+      final sep = value.indexOf(';');
+      if (sep >= 0) value = value.substring(0, sep);
+      value = value.trim();
+      if (value.isNotEmpty && value.length > 20) {
+        setAuthToken(value);
+      }
+      break;
+    }
+  }
+}
+
 void setupApiInterceptors() {
   apiClient.interceptors.clear();
   apiClient.interceptors.add(InterceptorsWrapper(
@@ -65,7 +84,12 @@ void setupApiInterceptors() {
       }
       return handler.next(options);
     },
+    onResponse: (response, handler) {
+      _refreshTokenFromHeaders(response.headers);
+      return handler.next(response);
+    },
     onError: (error, handler) async {
+      _refreshTokenFromHeaders(error.response?.headers);
       if (error.response?.statusCode == 401 && _authToken != null) {
         await _handleSessionExpired();
       }
