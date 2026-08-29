@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:rotina_comercial/api/client.dart';
+import 'package:rotina_comercial/storage/session.dart';
 import 'package:rotina_comercial/auth/auth_provider.dart';
 import 'package:rotina_comercial/hooks/departments_controller.dart';
 import 'package:rotina_comercial/screens/login_screen.dart';
@@ -29,6 +30,13 @@ void main() async {
   } catch (_) {
     // ignora se não houver proxy configurado
   }
+  // Proxy salvo manualmente prevalece sobre a auto-detecção.
+  try {
+    final saved = await Session.getProxy();
+    if (saved.isNotEmpty) {
+      setSystemProxy(saved);
+    }
+  } catch (_) {}
   setupApiInterceptors();
   runApp(const MyApp());
 }

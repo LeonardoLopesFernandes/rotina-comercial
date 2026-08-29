@@ -12,6 +12,7 @@ class Session {
   static const String _name = 'user_name';
   static const int _tokenExpiryDays = 14;
   static const String _treatmentKey = 'treatments';
+  static const String _proxy = 'http_proxy';
 
   static SharedPreferences? _prefs;
 
@@ -73,6 +74,16 @@ class Session {
     final email = await getSavedEmail();
     final password = await getSavedPassword();
     return email.trim().isNotEmpty && password.trim().isNotEmpty;
+  }
+
+  static Future<void> saveProxy(String proxy) async {
+    final prefs = await _instance;
+    await prefs.setString(_proxy, proxy.trim());
+  }
+
+  static Future<String> getProxy() async {
+    final prefs = await _instance;
+    return prefs.getString(_proxy) ?? '';
   }
 
   static Future<void> clearCredentials() async {

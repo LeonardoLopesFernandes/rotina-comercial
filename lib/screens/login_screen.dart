@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:rotina_comercial/api/client.dart' show setSystemProxy, reapplyProxy;
 import 'package:rotina_comercial/storage/session.dart';
 import 'package:rotina_comercial/theme.dart';
 import 'package:rotina_comercial/utils/toast.dart';
@@ -54,6 +55,52 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       showToast('Não foi possível abrir o navegador: $e', true);
     }
+  }
+
+  Future<void> _showProxyDialog() async {
+    final controller = TextEditingController();
+    controller.text = await Session.getProxy();
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Configurar proxy'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Informe host:porta do proxy (ex.: 10.0.0.5:8080). '
+                'Deixe vazio para não usar proxy.'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                hintText: 'host:porta',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final value = controller.text.trim();
+              await Session.saveProxy(value);
+              setSystemProxy(value);
+              reapplyProxy();
+              Navigator.of(ctx).pop();
+              showToast(value.isEmpty
+                  ? 'Proxy removido'
+                  : 'Proxy aplicado: $value');
+            },
+            child: const Text('Salvar'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _handleSaveCredentials() async {
@@ -117,6 +164,8 @@ class _LoginScreenState extends State<LoginScreen> {
               }),
               const SizedBox(height: 12),
               _secondaryButton('ENTRAR VIA NAVEGADOR', _handleOpenBrowser),
+              const SizedBox(height: 12),
+              _secondaryButton('CONFIGURAR PROXY', _showProxyDialog),
             ],
           ),
         ),

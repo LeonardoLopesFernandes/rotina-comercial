@@ -78,6 +78,15 @@ void _applyProxy() {
   );
 }
 
+/// Reaplica o proxy em runtime (ex.: após o usuário configurá-lo na tela).
+void reapplyProxy() {
+  if (_systemProxy.isEmpty) {
+    apiClient.httpClientAdapter = IOHttpClientAdapter();
+  } else {
+    _applyProxy();
+  }
+}
+
 void _refreshTokenFromHeaders(Headers? headers) {
   if (headers == null) return;
   final setCookie = headers['set-cookie'];
