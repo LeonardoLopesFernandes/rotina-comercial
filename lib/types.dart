@@ -5,8 +5,8 @@ class DepartmentInfo {
   const DepartmentInfo({required this.code, required this.name});
 
   factory DepartmentInfo.fromJson(Map<String, dynamic> json) => DepartmentInfo(
-        code: json['code'] as String,
-        name: json['name'] as String,
+        code: json['code'] as String? ?? '',
+        name: json['name'] as String? ?? '',
       );
 
   Map<String, dynamic> toJson() => {'code': code, 'name': name};
@@ -36,8 +36,8 @@ class TreatedAnswer {
         shortQuestion: json['shortQuestion'] as String?,
         answer: json['answer'] as bool?,
         number: json['number'] as int? ?? 0,
-        items: (json['items'] as num).toInt(),
-        percentage: (json['percentage'] as num).toDouble(),
+        items: (json['items'] as num?)?.toInt() ?? 0,
+        percentage: (json['percentage'] as num?)?.toDouble() ?? 0,
         active: json['active'] as bool?,
       );
 
@@ -84,10 +84,10 @@ class Item {
   });
 
   factory Item.fromJson(Map<String, dynamic> json) => Item(
-        id: json['id'] as String,
-        ean: json['ean'] as String,
-        sap: json['sap'] as String,
-        description: json['description'] as String,
+        id: json['id'] as String? ?? '',
+        ean: json['ean'] as String? ?? '',
+        sap: json['sap'] as String? ?? '',
+        description: json['description'] as String? ?? '',
         quantityStock: (json['quantityStock'] as num?)?.toInt() ?? 0,
         saleQuantityDay: (json['saleQuantityDay'] as num?)?.toInt() ?? 0,
         saleQuantityMonth: (json['saleQuantityMonth'] as num?)?.toInt() ?? 0,
@@ -163,8 +163,8 @@ class SpecialAnswer {
   });
 
   factory SpecialAnswer.fromJson(Map<String, dynamic> json) => SpecialAnswer(
-        question: json['question'] as String,
-        shortQuestion: json['shortQuestion'] as String,
+        question: json['question'] as String? ?? '',
+        shortQuestion: json['shortQuestion'] as String? ?? '',
         answer: json['answer'] as bool? ?? false,
         number: json['number'] as int? ?? 0,
         active: json['active'] as bool? ?? false,
@@ -203,12 +203,12 @@ class SpecialItem {
   });
 
   factory SpecialItem.fromJson(Map<String, dynamic> json) => SpecialItem(
-        id: json['id'] as String,
-        store: json['store'] as String,
+        id: json['id'] as String? ?? '',
+        store: json['store'] as String? ?? '',
         department: DepartmentInfo.fromJson(json['department'] as Map<String, dynamic>),
-        ean: json['ean'] as String,
-        sap: json['sap'] as String,
-        description: json['description'] as String,
+        ean: json['ean'] as String? ?? '',
+        sap: json['sap'] as String? ?? '',
+        description: json['description'] as String? ?? '',
         stockQuantity: (json['stockQuantity'] as num?)?.toInt() ?? 0,
         stockValue: (json['stockValue'] as num?)?.toDouble() ?? 0,
         grade: json['grade'] as String? ?? '',
@@ -237,8 +237,8 @@ class ByAnswerItem {
   factory ByAnswerItem.fromJson(Map<String, dynamic> json) => ByAnswerItem(
         question: json['question'] as String,
         number: json['number'] as int? ?? 0,
-        items: (json['items'] as num).toInt(),
-        percentage: (json['percentage'] as num).toDouble(),
+        items: (json['items'] as num?)?.toInt() ?? 0,
+        percentage: (json['percentage'] as num?)?.toDouble() ?? 0,
       );
 }
 
@@ -277,7 +277,7 @@ class RoutineStatusItem {
   });
 
   factory RoutineStatusItem.fromJson(Map<String, dynamic> json) => RoutineStatusItem(
-        status: json['status'] as String,
+        status: json['status'] as String? ?? '',
         days: (json['days'] as num?)?.toInt() ?? 0,
         percentage: (json['percentage'] as num?)?.toDouble() ?? 0,
       );

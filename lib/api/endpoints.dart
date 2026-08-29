@@ -1,7 +1,5 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter/services.dart';
 import 'package:rotina_comercial/api/client.dart';
 import 'package:rotina_comercial/types.dart';
 import 'package:rotina_comercial/theme.dart';
@@ -138,12 +136,7 @@ Future<void> saveNoSalesHistoryItemAnswer(SpecialAnswerRequest request) async {
 Future<({bool saved, String message})> downloadDaySchedulePdf(
     String dateApi) async {
   try {
-    final dir = await getExternalStorageDirectory();
-    if (dir == null) {
-      return (saved: false, message: 'Diretório não disponível');
-    }
     final fileName = 'Rotina_${dateApi.replaceAll('/', '_')}.pdf';
-    final filePath = '${dir.path}/$fileName';
     final headers = <String, String>{
       'User-Agent':
           'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 '
@@ -156,7 +149,7 @@ Future<({bool saved, String message})> downloadDaySchedulePdf(
       headers['Authorization'] = 'Bearer ${getAuthToken()}';
       headers['Cookie'] = 'rc-newToken=${getAuthToken()}';
     }
-    await apiClient.get(
+    final res = await apiClient.get(
       'rotina/pdf/generate-day-schedule',
       queryParameters: {'store': store, 'date': dateApi},
       options: Options(
@@ -164,12 +157,15 @@ Future<({bool saved, String message})> downloadDaySchedulePdf(
         responseType: ResponseType.bytes,
       ),
       onReceiveProgress: (_, __) {},
-    ).then((res) async {
-      final bytes = res.data as List<int>;
-      final file = File(filePath);
-      await file.writeAsBytes(bytes);
-    });
-    return (saved: true, message: 'PDF salvo em: $filePath');
+    );
+    final bytes = Uint8List.fromList(res.data as List<int>);
+    await const MethodChannel('rotina/storage').invokeMethod<String>(
+      'savePdf',
+      {'bytes': bytes, 'fileName': fileName},
+    );
+    return (saved: true, message: 'PDF salvo na pasta Downloads: $fileName');
+  } on PlatformException catch (e) {
+    return (saved: false, message: 'Erro ao salvar PDF: ${e.message}');
   } on DioException catch (e) {
     final status = e.response?.statusCode;
     if (status != null && status >= 400) {

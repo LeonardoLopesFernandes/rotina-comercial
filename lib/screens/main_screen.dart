@@ -27,6 +27,7 @@ class _MainScreenState extends State<MainScreen> {
   bool _showLogout = false;
   bool _showExit = false;
   bool _showDatePicker = false;
+  late DateTime _calendarMonth;
   Item? _checklistItem;
   Item? _badgeItem;
   bool _showSuccessToast = false;
@@ -36,6 +37,8 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _blocked = isBlocked();
+    final now = DateTime.now();
+    _calendarMonth = DateTime(now.year, now.month, 1);
   }
 
   @override
@@ -53,24 +56,38 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  List<DateTime> _weekDays(DateTime selected) {
-    final range = getWeekRange(selected);
-    final days = <DateTime>[];
-    var current = DateTime(range.monday.year, range.monday.month, range.monday.day);
-    while (!current.isAfter(DateTime(range.friday.year, range.friday.month, range.friday.day))) {
-      days.add(current);
-      current = current.add(const Duration(days: 1));
-    }
-    return days;
-  }
-
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<DepartmentsController>();
 
     return WillPopScope(
       onWillPop: () async {
-        if (_showMenu || _showLogout || _showExit) return false;
+        final focus = FocusManager.instance.primaryFocus;
+        if (focus != null && focus.hasFocus) {
+          focus.unfocus();
+          return false;
+        }
+        if (_showMenu) {
+          setState(() => _showMenu = false);
+          return false;
+        }
+        if (_showLogout) {
+          setState(() => _showLogout = false);
+          return false;
+        }
+        if (_showExit) return false;
+        if (_showDatePicker) {
+          setState(() => _showDatePicker = false);
+          return false;
+        }
+        if (_checklistItem != null) {
+          setState(() => _checklistItem = null);
+          return false;
+        }
+        if (_badgeItem != null) {
+          setState(() => _badgeItem = null);
+          return false;
+        }
         setState(() => _showExit = true);
         return false;
       },
@@ -190,7 +207,11 @@ class _MainScreenState extends State<MainScreen> {
       child: Column(
         children: [
           GestureDetector(
-            onTap: () => setState(() => _showDatePicker = true),
+            onTap: () => setState(() {
+                  _showDatePicker = true;
+                  _calendarMonth =
+                      DateTime(controller.selectedDate.year, controller.selectedDate.month, 1);
+                }),
             child: Row(
               children: [
                 Expanded(
@@ -212,7 +233,11 @@ class _MainScreenState extends State<MainScreen> {
             ),
           ),
           GestureDetector(
-            onTap: () => setState(() => _showDatePicker = true),
+            onTap: () => setState(() {
+                  _showDatePicker = true;
+                  _calendarMonth =
+                      DateTime(controller.selectedDate.year, controller.selectedDate.month, 1);
+                }),
             child: Row(
               children: [
                 Expanded(
@@ -415,7 +440,8 @@ class _MainScreenState extends State<MainScreen> {
       String confirmLabel, VoidCallback onCancel, VoidCallback onConfirm) {
     return Container(
       color: const Color(0x66000000),
-      child: Center(
+      child: Align(
+        alignment: Alignment.center,
         child: Container(
           width: double.infinity,
           constraints: const BoxConstraints(maxWidth: 320),
@@ -427,21 +453,24 @@ class _MainScreenState extends State<MainScreen> {
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(title,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
                       fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
               const SizedBox(height: 8),
               Text(message,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 14, color: AppColors.textSecondary)),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   GestureDetector(
                     onTap: onCancel,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 18),
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF1F3F4),
                         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -451,11 +480,11 @@ class _MainScreenState extends State<MainScreen> {
                               color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   GestureDetector(
                     onTap: onConfirm,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 18),
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                       decoration: BoxDecoration(
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -475,7 +504,22 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _datePickerSheet(BuildContext context, DepartmentsController controller) {
-    final days = _weekDays(controller.selectedDate);
+    const weekShort = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
+    const months = [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
+    final first = DateTime(_calendarMonth.year, _calendarMonth.month, 1);
+    final daysInMonth =
+        DateTime(_calendarMonth.year, _calendarMonth.month + 1, 0).day;
+    final leading = (first.weekday - 1) % 7;
+    final cells = <DateTime?>[];
+    for (var i = 0; i < leading; i++) cells.add(null);
+    for (var d = 1; d <= daysInMonth; d++) {
+      cells.add(DateTime(_calendarMonth.year, _calendarMonth.month, d));
+    }
+    while (cells.length % 7 != 0) cells.add(null);
+
     return Container(
       color: const Color(0x66000000),
       child: Center(
@@ -483,7 +527,7 @@ class _MainScreenState extends State<MainScreen> {
           width: double.infinity,
           constraints: const BoxConstraints(maxWidth: 340),
           margin: const EdgeInsets.all(24),
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -491,42 +535,97 @@ class _MainScreenState extends State<MainScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Selecione a data',
-                  style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primary)),
-              const SizedBox(height: 12),
-              ...days.map((day) {
-                final isSelected =
-                    day.millisecondsSinceEpoch == controller.selectedDate.millisecondsSinceEpoch;
-                return GestureDetector(
-                  onTap: () {
-                    controller.selectedDate = day;
-                    setState(() => _showDatePicker = false);
-                    controller.loadDataForDate(day);
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 6),
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary : const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                    child: Text(
-                      '${getDayOfWeekPt(day)} - ${formatDisplayDate(day)}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isSelected ? Colors.white : AppColors.textPrimary,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left, color: AppColors.primary),
+                    onPressed: () => setState(() {
+                      _calendarMonth = DateTime(
+                          _calendarMonth.year, _calendarMonth.month - 1, 1);
+                    }),
+                  ),
+                  Text('${months[_calendarMonth.month - 1]} ${_calendarMonth.year}',
+                      style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary)),
+                  IconButton(
+                    icon: const Icon(Icons.chevron_right, color: AppColors.primary),
+                    onPressed: () => setState(() {
+                      _calendarMonth = DateTime(
+                          _calendarMonth.year, _calendarMonth.month + 1, 1);
+                    }),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: weekShort
+                    .map((w) => Expanded(
+                          child: Center(
+                            child: Text(w,
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textMuted)),
+                          ),
+                        ))
+                    .toList(),
+              ),
+              const SizedBox(height: 8),
+              GridView.count(
+                crossAxisCount: 7,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: 1,
+                children: cells.map((day) {
+                  if (day == null) return const SizedBox.shrink();
+                  final selected = sameDay(day, controller.selectedDate);
+                  final isToday = sameDay(day, DateTime.now());
+                  return GestureDetector(
+                    onTap: () {
+                      controller.selectedDate = day;
+                      setState(() => _showDatePicker = false);
+                      controller.loadDataForDate(day);
+                    },
+                    child: Center(
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: selected
+                            ? const BoxDecoration(
+                                color: AppColors.primary, shape: BoxShape.circle)
+                            : (isToday
+                                ? BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: AppColors.primary),
+                                  )
+                                : null),
+                        child: Center(
+                          child: Text(
+                            '${day.day}',
+                            style: TextStyle(
+                              color: selected
+                                  ? Colors.white
+                                  : (isToday
+                                      ? AppColors.primary
+                                      : AppColors.textPrimary),
+                              fontWeight: selected || isToday
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                );
-              }),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
               GestureDetector(
                 onTap: () => setState(() => _showDatePicker = false),
                 child: Container(
-                  margin: const EdgeInsets.only(top: 8),
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
@@ -535,7 +634,9 @@ class _MainScreenState extends State<MainScreen> {
                   ),
                   child: const Center(
                     child: Text('Fechar',
-                        style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                        style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w600)),
                   ),
                 ),
               ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:rotina_comercial/api/client.dart' show setSystemProxy, reapplyProxy;
 import 'package:rotina_comercial/storage/session.dart';
 import 'package:rotina_comercial/theme.dart';
 import 'package:rotina_comercial/utils/toast.dart';
@@ -17,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _loading = true;
   bool _autoLoginDisparado = false;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -42,79 +42,29 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _saveCredentials() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    if (email.isNotEmpty && password.isNotEmpty) {
+      await Session.saveCredentials(email, password);
+    }
+  }
+
   void _handleLogin() {
     _autoLoginDisparado = true;
+    _saveCredentials();
     Navigator.of(context)
         .pushNamed('LoginWebView', arguments: {'autoLogin': false});
   }
 
   Future<void> _handleOpenBrowser() async {
+    _saveCredentials();
     const url = 'https://sl-authorization.americanas.io/rotina-comercial';
     try {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     } catch (e) {
       showToast('Não foi possível abrir o navegador: $e', true);
     }
-  }
-
-  Future<void> _showProxyDialog() async {
-    final controller = TextEditingController();
-    controller.text = await Session.getProxy();
-    if (!mounted) return;
-    await showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Configurar proxy'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Informe host:porta do proxy (ex.: 10.0.0.5:8080). '
-                'Deixe vazio para não usar proxy.'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                hintText: 'host:porta',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () async {
-              final value = controller.text.trim();
-              await Session.saveProxy(value);
-              setSystemProxy(value);
-              reapplyProxy();
-              Navigator.of(ctx).pop();
-              showToast(value.isEmpty
-                  ? 'Proxy removido'
-                  : 'Proxy aplicado: $value');
-            },
-            child: const Text('Salvar'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _handleSaveCredentials() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-    if (email.isEmpty || password.isEmpty) {
-      showToast('Preencha e-mail e senha');
-      return;
-    }
-    await Session.saveCredentials(email, password);
-    showToast('Credenciais salvas! Iniciando login automático...');
-    _autoLoginDisparado = true;
-    Navigator.of(context)
-        .pushNamed('LoginWebView', arguments: {'autoLogin': true});
   }
 
   @override
@@ -127,9 +77,18 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     }
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Center(
+    return WillPopScope(
+      onWillPop: () async {
+        final focus = FocusManager.instance.primaryFocus;
+        if (focus != null && focus.hasFocus) {
+          focus.unfocus();
+          return false;
+        }
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -151,24 +110,32 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: _passwordController,
-                obscureText: true,
-                decoration: _inputDecoration('Senha'),
+                obscureText: _obscurePassword,
+                decoration: _inputDecoration('Senha').copyWith(
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      color: AppColors.textMuted,
+                    ),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               _primaryButton('ENTRAR', _handleLogin),
-              const SizedBox(height: 12),
-              _secondaryButton('SALVAR CREDENCIAIS', _handleSaveCredentials),
               const SizedBox(height: 12),
               _secondaryButton('ENTRAR COM TOKEN', () {
                 Navigator.of(context).pushNamed('LoginToken');
               }),
               const SizedBox(height: 12),
               _secondaryButton('ENTRAR VIA NAVEGADOR', _handleOpenBrowser),
-              const SizedBox(height: 12),
-              _secondaryButton('CONFIGURAR PROXY', _showProxyDialog),
             ],
           ),
         ),
+      ),
       ),
     );
   }
