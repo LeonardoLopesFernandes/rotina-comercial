@@ -1,7 +1,5 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
-import 'package:dio/io.dart';
+import 'package:rotina_comercial/api/cronet_adapter.dart';
 import 'package:rotina_comercial/storage/session.dart';
 
 /// Proxy detectado do sistema Android em runtime (ex.: '192.168.1.10:8080').
@@ -60,31 +58,24 @@ final Dio apiClient = Dio(BaseOptions(
     'Content-Type': 'application/json',
     'Accept': 'application/json, text/plain, */*',
     'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    'x-requested-with': 'com.unixshells.devbrowser',
+    'User-Agent':
+        'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 '
+        '(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+    'x-requested-with': 'com.rotina.rotina_comercial',
     'Origin': appOrigin,
     'Referer': '$appOrigin/',
   },
 ));
 
-void _applyProxy() {
-  if (_systemProxy.isEmpty) return;
-  apiClient.httpClientAdapter = IOHttpClientAdapter(
-    createHttpClient: () {
-      final client = HttpClient();
-      client.findProxy = (uri) => 'PROXY $_systemProxy;';
-      return client;
-    },
-  );
+/// Usa a pilha de rede do Chromium (Cronet) — idêntica à do navegador —
+/// para driblar WAF/Akamai/bot-management e respeitar o proxy do sistema.
+void _applyTransport() {
+  apiClient.httpClientAdapter = cronetAdapter;
 }
 
-/// Reaplica o proxy em runtime (ex.: após o usuário configurá-lo na tela).
+/// Reaplica o transporte em runtime (mantido para API de compatibilidade).
 void reapplyProxy() {
-  if (_systemProxy.isEmpty) {
-    apiClient.httpClientAdapter = IOHttpClientAdapter();
-  } else {
-    _applyProxy();
-  }
+  _applyTransport();
 }
 
 void _refreshTokenFromHeaders(Headers? headers) {
@@ -107,7 +98,7 @@ void _refreshTokenFromHeaders(Headers? headers) {
 }
 
 void setupApiInterceptors() {
-  _applyProxy();
+  _applyTransport();
   apiClient.interceptors.clear();
   apiClient.interceptors.add(InterceptorsWrapper(
     onRequest: (options, handler) {

@@ -145,8 +145,10 @@ Future<({bool saved, String message})> downloadDaySchedulePdf(
     final fileName = 'Rotina_${dateApi.replaceAll('/', '_')}.pdf';
     final filePath = '${dir.path}/$fileName';
     final headers = <String, String>{
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      'x-requested-with': 'com.unixshells.devbrowser',
+      'User-Agent':
+          'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 '
+          '(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+      'x-requested-with': 'com.rotina.rotina_comercial',
       'Origin': 'https://rotina-comercial.americanas.io',
       'Referer': 'https://rotina-comercial.americanas.io/',
     };

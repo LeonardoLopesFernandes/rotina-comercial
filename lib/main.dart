@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:rotina_comercial/api/client.dart';
+import 'package:rotina_comercial/api/cronet_adapter.dart';
 import 'package:rotina_comercial/storage/session.dart';
 import 'package:rotina_comercial/auth/auth_provider.dart';
 import 'package:rotina_comercial/hooks/departments_controller.dart';
@@ -37,6 +38,7 @@ void main() async {
       setSystemProxy(saved);
     }
   } catch (_) {}
+  initCronetTransport();
   setupApiInterceptors();
   runApp(const MyApp());
 }
