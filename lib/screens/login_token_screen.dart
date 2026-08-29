@@ -70,11 +70,12 @@ class _LoginTokenScreenState extends State<LoginTokenScreen> {
       clearToken();
       final status = e.response?.statusCode;
       if (status == 403 || status == 401) {
+        final body = (e.response?.data?.toString() ?? '').replaceAll('\n', ' ');
+        debugPrint('TOKEN_VALIDATION_FAILED status=$status body=$body');
         showToast(
-            'Token inválido/acesso negado. O token do site é temporário e '
-            'rotaciona a cada requisição: copie um token NOVO do DevTools '
-            '(cookie rc-newToken) logo antes de colar aqui. Evite deixar o '
-            'site aberto, pois ele renova o token e invalida o anterior.',
+            'Token rejeitado (HTTP $status). Se a rede usa proxy, ele pode '
+            'estar bloqueando o app. Use o navegador (Kiwi) para pegar o '
+            'token e cole aqui. Detalhe: ${body.length > 80 ? body.substring(0, 80) : body}',
             true);
       } else if (status == 500) {
         showToast('Erro no servidor (500). Tente novamente.', true);

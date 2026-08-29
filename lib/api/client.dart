@@ -1,5 +1,16 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:rotina_comercial/storage/session.dart';
+
+/// Proxy detectado do sistema Android em runtime (ex.: '192.168.1.10:8080').
+/// Em muitas redes corporativas o app precisa do proxy para alcançar a BFF.
+String _systemProxy = '';
+
+void setSystemProxy(String proxy) {
+  _systemProxy = proxy;
+}
 
 const String baseUrl = 'https://rotina-comercial-bff.americanas.io/';
 const String appOrigin = 'https://rotina-comercial.americanas.io';
@@ -56,6 +67,17 @@ final Dio apiClient = Dio(BaseOptions(
   },
 ));
 
+void _applyProxy() {
+  if (_systemProxy.isEmpty) return;
+  apiClient.httpClientAdapter = IOHttpClientAdapter(
+    createHttpClient: () {
+      final client = HttpClient();
+      client.findProxy = (uri) => 'PROXY $_systemProxy;';
+      return client;
+    },
+  );
+}
+
 void _refreshTokenFromHeaders(Headers? headers) {
   if (headers == null) return;
   final setCookie = headers['set-cookie'];
@@ -76,11 +98,14 @@ void _refreshTokenFromHeaders(Headers? headers) {
 }
 
 void setupApiInterceptors() {
+  _applyProxy();
   apiClient.interceptors.clear();
   apiClient.interceptors.add(InterceptorsWrapper(
     onRequest: (options, handler) {
       if (_authToken != null && _authToken!.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $_authToken';
+        // Replicar o cookie que o navegador envia (algumas redes/WAF exigem).
+        options.headers['Cookie'] = 'rc-newToken=$_authToken';
       }
       return handler.next(options);
     },

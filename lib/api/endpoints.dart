@@ -152,6 +152,7 @@ Future<({bool saved, String message})> downloadDaySchedulePdf(
     };
     if (getAuthToken() != null && getAuthToken()!.isNotEmpty) {
       headers['Authorization'] = 'Bearer ${getAuthToken()}';
+      headers['Cookie'] = 'rc-newToken=${getAuthToken()}';
     }
     await apiClient.get(
       'rotina/pdf/generate-day-schedule',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:rotina_comercial/storage/session.dart';
 import 'package:rotina_comercial/theme.dart';
 import 'package:rotina_comercial/utils/toast.dart';
@@ -44,6 +45,15 @@ class _LoginScreenState extends State<LoginScreen> {
     _autoLoginDisparado = true;
     Navigator.of(context)
         .pushNamed('LoginWebView', arguments: {'autoLogin': false});
+  }
+
+  Future<void> _handleOpenBrowser() async {
+    const url = 'https://sl-authorization.americanas.io/rotina-comercial';
+    try {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } catch (e) {
+      showToast('Não foi possível abrir o navegador: $e', true);
+    }
   }
 
   Future<void> _handleSaveCredentials() async {
@@ -105,6 +115,8 @@ class _LoginScreenState extends State<LoginScreen> {
               _secondaryButton('ENTRAR COM TOKEN', () {
                 Navigator.of(context).pushNamed('LoginToken');
               }),
+              const SizedBox(height: 12),
+              _secondaryButton('ENTRAR VIA NAVEGADOR', _handleOpenBrowser),
             ],
           ),
         ),

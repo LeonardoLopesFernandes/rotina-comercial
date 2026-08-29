@@ -13,12 +13,22 @@ import 'package:rotina_comercial/screens/special_items_screen.dart';
 import 'package:rotina_comercial/screens/dashboard_screen.dart';
 import 'package:rotina_comercial/utils/toast.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.dark,
     statusBarBrightness: Brightness.light,
   ));
+  try {
+    final proxy = await const MethodChannel('rotina/proxy')
+        .invokeMethod<String>('getProxy');
+    if (proxy != null && proxy.isNotEmpty) {
+      setSystemProxy(proxy);
+    }
+  } catch (_) {
+    // ignora se não houver proxy configurado
+  }
   setupApiInterceptors();
   runApp(const MyApp());
 }
