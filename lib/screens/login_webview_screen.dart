@@ -200,6 +200,9 @@ class _LoginWebViewScreenState extends State<LoginWebViewScreen> {
 
   void _onLoadEnd(String url) {
     if (!_loginDone && url.startsWith(_appBase)) {
+      _checkTokenInUrl(url);
+    }
+    if (!_loginDone && url.startsWith(_appBase)) {
       setState(() => _loading = true);
       _startTokenPolling();
     }
@@ -219,7 +222,10 @@ class _LoginWebViewScreenState extends State<LoginWebViewScreen> {
     _tokenAttempts += 1;
     if (_tokenAttempts > 25) {
       setState(() => _loading = false);
-      showToast('Não foi possível obter o token. Tente novamente.', true);
+      showToast('Não foi possível obter o token. Use "Entrar com token".', true);
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
       return;
     }
     _webViewController.runJavaScript(_captureTokenScript);
@@ -251,6 +257,12 @@ class _LoginWebViewScreenState extends State<LoginWebViewScreen> {
     });
     _webViewController.runJavaScript(_captureUsernameScript);
     await context.read<AuthProvider>().setAuthenticated(token);
+    // A tela WebView foi empurrada por cima da Root; ao autenticar, a Root
+    // já exibe a Home, mas este widget continuaria por cima. Fazemos pop até
+    // a rota raiz para revelar a Home.
+    if (mounted && Navigator.of(context).canPop()) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
   }
 
   @override
