@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:rotina_comercial/api/client.dart';
 import 'package:rotina_comercial/api/cronet_adapter.dart';
@@ -56,6 +57,13 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         scaffoldMessengerKey: scaffoldMessengerKey,
         debugShowCheckedModeBanner: false,
+        locale: const Locale('pt', 'BR'),
+        supportedLocales: const [Locale('pt', 'BR')],
+        localizationsDelegates: [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         title: 'Rotina Comercial',
         theme: ThemeData(
           primaryColor: const Color(0xFFE60014),
