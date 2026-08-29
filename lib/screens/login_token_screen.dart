@@ -61,6 +61,11 @@ class _LoginTokenScreenState extends State<LoginTokenScreen> {
       setAuthToken(token);
       await getItems(formatApiDate(DateTime.now()));
       await context.read<AuthProvider>().setAuthenticated(token);
+      // LoginToken foi empurrado sobre a Root; ao autenticar, a Root já
+      // exibe a Home, mas esta tela ficaria por cima. Fazemos pop à raiz.
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
     } on DioException catch (e) {
       clearToken();
       final status = e.response?.statusCode;

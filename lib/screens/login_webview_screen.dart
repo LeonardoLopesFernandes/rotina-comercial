@@ -192,8 +192,10 @@ class _LoginWebViewScreenState extends State<LoginWebViewScreen> {
   void _onNavigation(String url) {
     _currentUrl = url;
     _checkTokenInUrl(url);
-    if (url.startsWith(_appBase) && !_loginDone && !_tokenFound) {
+    if (!_loginDone) {
       setState(() => _loading = true);
+    }
+    if (url.startsWith(_appBase) && !_loginDone && !_tokenFound) {
       _startTokenPolling();
     }
   }
@@ -203,8 +205,9 @@ class _LoginWebViewScreenState extends State<LoginWebViewScreen> {
       _checkTokenInUrl(url);
     }
     if (!_loginDone && url.startsWith(_appBase)) {
-      setState(() => _loading = true);
       _startTokenPolling();
+    } else if (!_loginDone) {
+      setState(() => _loading = false);
     }
     _handleAutoFill();
   }
@@ -272,7 +275,20 @@ class _LoginWebViewScreenState extends State<LoginWebViewScreen> {
       body: Stack(
         children: [
           WebViewWidget(controller: _webViewController),
-          if (_loading)
+          // Barra fina e NÃO-bloqueante durante a navegação normal.
+          if (_loading && !_loginDone)
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: LinearProgressIndicator(
+                minHeight: 3,
+                color: AppColors.primary,
+                backgroundColor: Color(0x33E60014),
+              ),
+            ),
+          // Overlay bloqueante só após capturar o token ("Entrando...").
+          if (_loginDone)
             Container(
               color: const Color(0xE6FFFFFF),
               child: Center(
