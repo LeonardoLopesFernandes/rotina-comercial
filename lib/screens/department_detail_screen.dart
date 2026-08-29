@@ -21,7 +21,8 @@ class _DepartmentDetailScreenState extends State<DepartmentDetailScreen> {
   late String _deptCode;
   late String _deptName;
   late DateTime _selectedDate;
-  late List<Item> _list;
+  List<Item> _list = [];
+  bool _loaded = false;
   Item? _checklistItem;
   Item? _badgeItem;
   bool _saving = false;
@@ -38,7 +39,7 @@ class _DepartmentDetailScreenState extends State<DepartmentDetailScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final args = ModalRoute.of(context)?.settings.arguments as Map?;
-    if (args != null && _list.isEmpty) {
+    if (args != null && !_loaded) {
       _deptCode = args['deptCode'] as String;
       _deptName = args['deptName'] as String;
       _selectedDate =
@@ -47,6 +48,7 @@ class _DepartmentDetailScreenState extends State<DepartmentDetailScreen> {
           .map((e) => e.copyWith(departmentCode: _deptCode))
           .toList();
       _list = items;
+      _loaded = true;
     }
   }
 

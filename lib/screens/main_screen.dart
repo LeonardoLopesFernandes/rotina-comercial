@@ -504,7 +504,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _datePickerSheet(BuildContext context, DepartmentsController controller) {
-    const weekShort = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
+    const weekShort = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
     const months = [
       'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
@@ -512,7 +512,7 @@ class _MainScreenState extends State<MainScreen> {
     final first = DateTime(_calendarMonth.year, _calendarMonth.month, 1);
     final daysInMonth =
         DateTime(_calendarMonth.year, _calendarMonth.month + 1, 0).day;
-    final leading = (first.weekday - 1) % 7;
+    final leading = first.weekday % 7;
     final cells = <DateTime?>[];
     for (var i = 0; i < leading; i++) cells.add(null);
     for (var d = 1; d <= daysInMonth; d++) {
@@ -581,14 +581,17 @@ class _MainScreenState extends State<MainScreen> {
                 childAspectRatio: 1,
                 children: cells.map((day) {
                   if (day == null) return const SizedBox.shrink();
+                  final weekend = day.weekday == 6 || day.weekday == 7;
                   final selected = sameDay(day, controller.selectedDate);
                   final isToday = sameDay(day, DateTime.now());
                   return GestureDetector(
-                    onTap: () {
-                      controller.selectedDate = day;
-                      setState(() => _showDatePicker = false);
-                      controller.loadDataForDate(day);
-                    },
+                    onTap: weekend && !selected
+                        ? null
+                        : () {
+                            controller.selectedDate = day;
+                            setState(() => _showDatePicker = false);
+                            controller.loadDataForDate(day);
+                          },
                     child: Center(
                       child: Container(
                         width: 36,
@@ -608,9 +611,11 @@ class _MainScreenState extends State<MainScreen> {
                             style: TextStyle(
                               color: selected
                                   ? Colors.white
-                                  : (isToday
-                                      ? AppColors.primary
-                                      : AppColors.textPrimary),
+                                  : (weekend
+                                      ? AppColors.textHint
+                                      : (isToday
+                                          ? AppColors.primary
+                                          : AppColors.textPrimary)),
                               fontWeight: selected || isToday
                                   ? FontWeight.bold
                                   : FontWeight.normal,

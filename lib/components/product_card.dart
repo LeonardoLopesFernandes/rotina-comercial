@@ -30,7 +30,11 @@ class _ProductCardState extends State<ProductCard> {
   }
 
   void _handleCardPress() {
-    if (widget.blocked || widget.item.treated) return;
+    if (widget.blocked) return;
+    if (widget.item.treated) {
+      widget.onShowBadge(widget.item);
+      return;
+    }
     widget.onEdit(widget.item);
   }
 

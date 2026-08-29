@@ -62,7 +62,7 @@ class TreatmentBadgeModal extends StatelessWidget {
                       style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
                   Flexible(
                     child: SingleChildScrollView(
-                      child: answers != null && answers.isNotEmpty
+                      child: answers != null
                           ? Column(
                               children: shortQuestions.asMap().entries.map((e) {
                                 final answer = answers.firstWhere(
