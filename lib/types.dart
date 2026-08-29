@@ -35,7 +35,7 @@ class TreatedAnswer {
         question: json['question'] as String,
         shortQuestion: json['shortQuestion'] as String?,
         answer: json['answer'] as bool?,
-        number: json['number'] as int,
+        number: json['number'] as int? ?? 0,
         items: (json['items'] as num).toInt(),
         percentage: (json['percentage'] as num).toDouble(),
         active: json['active'] as bool?,
@@ -165,9 +165,9 @@ class SpecialAnswer {
   factory SpecialAnswer.fromJson(Map<String, dynamic> json) => SpecialAnswer(
         question: json['question'] as String,
         shortQuestion: json['shortQuestion'] as String,
-        answer: json['answer'] as bool,
-        number: json['number'] as int,
-        active: json['active'] as bool,
+        answer: json['answer'] as bool? ?? false,
+        number: json['number'] as int? ?? 0,
+        active: json['active'] as bool? ?? false,
       );
 }
 
@@ -236,7 +236,7 @@ class ByAnswerItem {
 
   factory ByAnswerItem.fromJson(Map<String, dynamic> json) => ByAnswerItem(
         question: json['question'] as String,
-        number: json['number'] as int,
+        number: json['number'] as int? ?? 0,
         items: (json['items'] as num).toInt(),
         percentage: (json['percentage'] as num).toDouble(),
       );
