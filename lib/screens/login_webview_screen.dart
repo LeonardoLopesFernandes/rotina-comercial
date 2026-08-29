@@ -106,7 +106,7 @@ class _LoginWebViewScreenState extends State<LoginWebViewScreen> {
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setUserAgent(
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36')
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
       ..setNavigationDelegate(
         NavigationDelegate(
           onNavigationRequest: (request) {
@@ -117,8 +117,21 @@ class _LoginWebViewScreenState extends State<LoginWebViewScreen> {
             _onLoadEnd(url);
           },
           onWebResourceError: (error) {
-            if (!_loginDone) {
-              showToast('Erro ao carregar: ${error.description}', true);
+            if (_loginDone) return;
+            if (error.isForMainFrame == true) {
+              final desc = error.description.toLowerCase();
+              if (desc.contains('connection_refused') ||
+                  desc.contains('err_connection_refused') ||
+                  desc.contains('name not resolved') ||
+                  desc.contains('internet') ||
+                  desc.contains('dns')) {
+                showToast(
+                    'Não foi possível abrir o login da Microsoft. Sua rede '
+                    'pode estar bloqueando o acesso. Use "Entrar com token".',
+                    true);
+              } else {
+                showToast('Erro ao carregar: ${error.description}', true);
+              }
             }
           },
         ),

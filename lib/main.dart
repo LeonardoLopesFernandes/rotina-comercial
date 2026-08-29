@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:rotina_comercial/api/client.dart';
 import 'package:rotina_comercial/auth/auth_provider.dart';
@@ -13,6 +14,11 @@ import 'package:rotina_comercial/screens/dashboard_screen.dart';
 import 'package:rotina_comercial/utils/toast.dart';
 
 void main() {
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark,
+    statusBarBrightness: Brightness.light,
+  ));
   setupApiInterceptors();
   runApp(const MyApp());
 }

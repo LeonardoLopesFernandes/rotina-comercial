@@ -35,11 +35,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build APK (arm64-v8a, release)
-        run: flutter build apk --release --target-platform android-arm64 --build-number=${{ github.run_number }} --build-name=1.0.${{ github.run_number }}
+      - name: Build APK (split-per-abi arm64-v8a, release)
+        run: flutter build apk --release --split-per-abi --target-platform android-arm64 --build-number=${{ github.run_number }} --build-name=1.0.${{ github.run_number }}
 
       - name: Rename APK
-        run: mv build/app/outputs/flutter-apk/app-release.apk rotina-comercial-arm64-v8a-release.apk
+        run: mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk rotina-comercial-arm64-v8a-release.apk
 
       - name: Create or update release
         uses: softprops/action-gh-release@v2

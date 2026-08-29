@@ -130,10 +130,12 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _toolbar(BuildContext context, DepartmentsController controller) {
     return Container(
-      height: 60,
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Row(
+      padding: EdgeInsets.only(
+          top: MediaQuery.of(context).padding.top, left: 8, right: 8),
+      child: SizedBox(
+        height: 60,
+        child: Row(
         children: [
           GestureDetector(
             onTap: () => setState(() => _showMenu = true),
@@ -171,6 +173,7 @@ class _MainScreenState extends State<MainScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

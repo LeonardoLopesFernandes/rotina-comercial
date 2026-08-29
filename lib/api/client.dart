@@ -9,10 +9,18 @@ bool _autoLoginTriggered = false;
 void Function()? _onSessionExpired;
 
 void setAuthToken(String token) {
-  _authToken = token;
-  if (token.isNotEmpty) {
+  _authToken = _normalizeToken(token);
+  if (_authToken != null && _authToken!.isNotEmpty) {
     _autoLoginTriggered = false;
   }
+}
+
+String? _normalizeToken(String token) {
+  var t = token.trim();
+  if (t.toLowerCase().startsWith('bearer ')) {
+    t = t.substring(7).trim();
+  }
+  return t.isEmpty ? null : t;
 }
 
 String? getAuthToken() => _authToken;

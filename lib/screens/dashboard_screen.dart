@@ -122,27 +122,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _toolbar(BuildContext context) {
     return Container(
-      height: 56,
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: const SizedBox(
-              width: 40,
-              height: 40,
-              child: Center(
-                child: Text('‹', style: TextStyle(fontSize: 32, color: AppColors.textPrimary)),
+      padding: EdgeInsets.only(
+          top: MediaQuery.of(context).padding.top, left: 8, right: 8),
+      child: SizedBox(
+        height: 56,
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: const SizedBox(
+                width: 40,
+                height: 40,
+                child: Center(
+                  child: Text('‹', style: TextStyle(fontSize: 32, color: AppColors.textPrimary)),
+                ),
               ),
             ),
-          ),
-          const Expanded(
-            child: Text('Painel de indicadores',
-                style: TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
-          ),
-        ],
+            const Expanded(
+              child: Text('Painel de indicadores',
+                  style: TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary)),
+            ),
+          ],
+        ),
       ),
     );
   }

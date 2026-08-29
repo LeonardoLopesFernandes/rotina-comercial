@@ -1,6 +1,11 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:rotina_comercial/api/client.dart'
+    show setAuthToken, clearToken, mapErrorMessage;
+import 'package:rotina_comercial/api/endpoints.dart' show getItems;
 import 'package:rotina_comercial/auth/auth_provider.dart';
 import 'package:rotina_comercial/theme.dart';
+import 'package:rotina_comercial/utils/time.dart' show formatApiDate;
 import 'package:rotina_comercial/utils/toast.dart';
 import 'package:provider/provider.dart';
 
@@ -17,12 +22,24 @@ class _LoginTokenScreenState extends State<LoginTokenScreen> {
 
   String _extractToken(String raw) {
     var text = raw.trim();
-    // Se for uma URL com ?token=..., extrai o valor
+    if (text.toLowerCase().startsWith('bearer ')) {
+      text = text.substring(7).trim();
+    }
+    // Cookie header, ex: "rc-newToken=eyJ...; outras=..."
+    final cookieIdx = text.indexOf('rc-newToken=');
+    if (cookieIdx >= 0) {
+      var value = text.substring(cookieIdx + 'rc-newToken='.length);
+      final sep = value.indexOf(RegExp(r'[;&]'));
+      if (sep >= 0) value = value.substring(0, sep);
+      return value.trim();
+    }
+    // URL com ?token=... ou &token=...
     final qi = text.indexOf('token=');
     if (qi >= 0) {
       var value = text.substring(qi + 'token='.length);
-      final amp = value.indexOf('&');
+      final amp = value.indexOf(RegExp(r'[&\s]'));
       if (amp >= 0) value = value.substring(0, amp);
+      value = Uri.decodeComponent(value);
       return value.trim();
     }
     return text;
@@ -34,11 +51,34 @@ class _LoginTokenScreenState extends State<LoginTokenScreen> {
       showToast('Cole a URL ou o token');
       return;
     }
+    if (token.length <= 20) {
+      showToast('Token muito curto. Use o token rc-newToken completo.', true);
+      return;
+    }
     setState(() => _saving = true);
-    showToast('Entrando...');
-    await context.read<AuthProvider>().setAuthenticated(token);
-    if (mounted) {
-      setState(() => _saving = false);
+    showToast('Validando token...');
+    try {
+      setAuthToken(token);
+      await getItems(formatApiDate(DateTime.now()));
+      await context.read<AuthProvider>().setAuthenticated(token);
+    } on DioException catch (e) {
+      clearToken();
+      final status = e.response?.statusCode;
+      if (status == 403 || status == 401) {
+        showToast(
+            'Token inválido ou acesso negado. Confira se é o token rc-newToken '
+            'completo (vem do cookie após o login no site).',
+            true);
+      } else if (status == 500) {
+        showToast('Erro no servidor (500). Tente novamente.', true);
+      } else {
+        showToast(mapErrorMessage(e), true);
+      }
+      if (mounted) setState(() => _saving = false);
+    } catch (e) {
+      clearToken();
+      showToast('Não foi possível validar o token.', true);
+      if (mounted) setState(() => _saving = false);
     }
   }
 

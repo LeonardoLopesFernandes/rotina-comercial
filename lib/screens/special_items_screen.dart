@@ -316,35 +316,38 @@ class _SpecialItemsScreenState extends State<SpecialItemsScreen> {
 
   Widget _toolbar(String title) {
     return Container(
-      height: 56,
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: const SizedBox(
-              width: 40,
-              height: 40,
-              child: Center(
-                child: Text('‹', style: TextStyle(fontSize: 32, color: AppColors.textPrimary)),
+      padding: EdgeInsets.only(
+          top: MediaQuery.of(context).padding.top, left: 8, right: 8),
+      child: SizedBox(
+        height: 56,
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: const SizedBox(
+                width: 40,
+                height: 40,
+                child: Center(
+                  child: Text('‹', style: TextStyle(fontSize: 32, color: AppColors.textPrimary)),
+                ),
               ),
             ),
-          ),
-          Expanded(
-            child: Text(title,
-                style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis),
-          ),
-          GestureDetector(
-            onTap: () => setState(() => _showMenu = true),
-            child: Image.asset('assets/home.png', width: 24, height: 24),
+            Expanded(
+              child: Text(title,
+                  style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
+            ),
+            GestureDetector(
+              onTap: () => setState(() => _showMenu = true),
+              child: Image.asset('assets/home.png', width: 24, height: 24),
           ),
         ],
+      ),
       ),
     );
   }

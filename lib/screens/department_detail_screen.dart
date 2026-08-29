@@ -170,31 +170,34 @@ class _DepartmentDetailScreenState extends State<DepartmentDetailScreen> {
 
   Widget _toolbar(String? statusIcon) {
     return Container(
-      height: 56,
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: const SizedBox(
-              width: 40,
-              height: 40,
-              child: Center(
-                child: Text('‹', style: TextStyle(fontSize: 32, color: AppColors.textPrimary)),
+      padding: EdgeInsets.only(
+          top: MediaQuery.of(context).padding.top, left: 8, right: 8),
+      child: SizedBox(
+        height: 56,
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: const SizedBox(
+                width: 40,
+                height: 40,
+                child: Center(
+                  child: Text('‹', style: TextStyle(fontSize: 32, color: AppColors.textPrimary)),
+                ),
               ),
             ),
-          ),
-          Expanded(
-            child: Text('$_deptCode - $_deptName',
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis),
-          ),
-          if (statusIcon != null)
-            Image.asset(statusIcon, width: 24, height: 24),
-        ],
+            Expanded(
+              child: Text('$_deptCode - $_deptName',
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
+            ),
+            if (statusIcon != null)
+              Image.asset(statusIcon, width: 24, height: 24),
+          ],
+        ),
       ),
     );
   }
