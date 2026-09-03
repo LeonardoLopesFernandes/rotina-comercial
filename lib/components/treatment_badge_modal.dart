@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:rotina_comercial/theme.dart';
 import 'package:rotina_comercial/types.dart';
 import 'package:rotina_comercial/utils/time.dart';
@@ -101,7 +101,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:transparent;color:#090909
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Html(data: html),
+                    HtmlWidget(html),
                     const SizedBox(height: 16),
                     GestureDetector(
                       onTap: onClose,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:rotina_comercial/hooks/departments_controller.dart';
 import 'package:rotina_comercial/theme.dart';
 import 'package:rotina_comercial/utils/time.dart';
@@ -46,16 +46,14 @@ class CalendarDialog extends StatelessWidget {
     }
     for (var d = 1; d <= daysInMonth; d++) {
       final day = DateTime(selected.year, selected.month, d);
-      final weekend = day.weekday == 6 || day.weekday == 7;
       final isToday = sameDay(day, now);
       final isSel = sameDay(day, selected);
-      final inWeek = !day.isBefore(weekStart) && !day.isAfter(weekEnd);
-      final isPast = day.isBefore(DateTime(now.year, now.month, now.day));
-      final enabled = inWeek && !weekend && !isPast;
+      final weekday = day.weekday;
+      final isWeekday = weekday >= DateTime.monday && weekday <= DateTime.friday;
 
       if (isSel) {
         cells.add('selected:$d');
-      } else if (!enabled) {
+      } else if (!isWeekday) {
         cells.add('muted:$d');
       } else {
         cells.add('active:$d');
@@ -94,7 +92,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:transparent;color:#050505
 .calendar{width:100%;background:#fff;border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
 .head{display:flex;align-items:center;justify-content:center;padding:18px 16px;border-bottom:1px solid #bbb;position:relative}
 .month{font-size:20px;font-weight:600}
-.back{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:28px;font-weight:300;color:#111;cursor:pointer;padding:8px}
+.back{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:28px;font-weight:300;color:#111;padding:8px}
 .week{display:grid;grid-template-columns:repeat(7,1fr);height:40px;align-items:center;border-bottom:1px solid #bbb;font-size:13px;font-weight:600;text-align:center;color:#888}
 .grid{display:grid;grid-template-columns:repeat(7,1fr);padding:6px 10px 10px;gap:2px}
 .day{display:flex;align-items:center;justify-content:center;height:40px;font-size:15px;font-weight:400}
@@ -142,9 +140,14 @@ body{font-family:Arial,Helvetica,sans-serif;background:transparent;color:#050505
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Html(data: html),
+                  HtmlWidget(html),
                   GestureDetector(
-                    onTap: onClose,
+                    onTap: () {
+                      final today = clampToWeekday(DateTime.now());
+                      controller.selectedDate = today;
+                      controller.loadDataForDate(today);
+                      onClose();
+                    },
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -152,7 +155,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:transparent;color:#050505
                         border: Border(top: BorderSide(color: Color(0xFFBBBBBB))),
                       ),
                       child: const Center(
-                        child: Text('Fechar',
+                        child: Text('Ir para hoje',
                             style: TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w600,
