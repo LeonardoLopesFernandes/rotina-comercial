@@ -27,6 +27,7 @@ class _MainScreenState extends State<MainScreen> {
   bool _showLogout = false;
   bool _showExit = false;
   bool _showDatePicker = false;
+  bool _searching = false;
   late DateTime _calendarMonth;
   Item? _checklistItem;
   Item? _badgeItem;
@@ -156,7 +157,7 @@ class _MainScreenState extends State<MainScreen> {
         children: [
           GestureDetector(
             onTap: () => setState(() => _showMenu = true),
-            child: Image.asset('assets/home.png', width: 24, height: 24),
+            child: Image.asset('assets/home.png', width: 32, height: 32),
           ),
           Expanded(
             child: Row(
@@ -272,7 +273,7 @@ class _MainScreenState extends State<MainScreen> {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF2F4F8),
+                    color: Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: const Color(0xFFE0E0E0)),
                   ),
@@ -287,10 +288,19 @@ class _MainScreenState extends State<MainScreen> {
                             hintStyle: TextStyle(color: AppColors.textHint),
                             border: InputBorder.none,
                           ),
-                          onChanged: (text) => controller.searchDepartment(text),
+                          onChanged: (text) {
+                            controller.searchDepartment(text);
+                            setState(() => _searching = text.trim().isNotEmpty);
+                          },
                         ),
                       ),
-                      Image.asset('assets/loopa.png', width: 20, height: 20),
+                      if (_searching)
+                        const SizedBox(
+                          width: 20, height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                        )
+                      else
+                        const Icon(Icons.search, color: AppColors.primary, size: 22),
                     ],
                   ),
                 ),
@@ -371,17 +381,17 @@ class _MainScreenState extends State<MainScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _menuItem('Painel de indicadores', () {
+                _menuItem(Icons.dashboard_outlined, 'Painel de indicadores', () {
                   setState(() => _showMenu = false);
                   Navigator.of(context).pushNamed('Dashboard');
                 }),
-                _menuItem('Rotina do dia', () => setState(() => _showMenu = false)),
-                _menuItem('Itens sem venda', () {
+                _menuItem(Icons.today, 'Rotina do dia', () => setState(() => _showMenu = false)),
+                _menuItem(Icons.shopping_cart_outlined, 'Itens sem venda', () {
                   setState(() => _showMenu = false);
                   Navigator.of(context).pushNamed('SpecialItems',
                       arguments: {'itemType': 'unsold'});
                 }),
-                _menuItem('Itens sem histórico de venda', () {
+                _menuItem(Icons.history, 'Itens sem histórico de venda', () {
                   setState(() => _showMenu = false);
                   Navigator.of(context).pushNamed('SpecialItems',
                       arguments: {'itemType': 'no_sales_history'});
@@ -394,15 +404,23 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Widget _menuItem(String label, VoidCallback onTap) {
+  Widget _menuItem(IconData icon, String label, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-        child: Text(label,
-            style: const TextStyle(
-                fontSize: 15, color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.primary, size: 24),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(label,
+                  style: const TextStyle(
+                      fontSize: 17, color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -520,6 +538,11 @@ class _MainScreenState extends State<MainScreen> {
     }
     while (cells.length % 7 != 0) cells.add(null);
 
+    final now = DateTime.now();
+    final weekRange = getWeekRange(now);
+    final weekStart = weekRange.monday;
+    final weekEnd = weekRange.friday;
+
     return Container(
       color: const Color(0x66000000),
       child: Center(
@@ -584,14 +607,17 @@ class _MainScreenState extends State<MainScreen> {
                   final weekend = day.weekday == 6 || day.weekday == 7;
                   final selected = sameDay(day, controller.selectedDate);
                   final isToday = sameDay(day, DateTime.now());
+                  final inCurrentWeek = !day.isBefore(weekStart) && !day.isAfter(weekEnd);
+                  final isPast = day.isBefore(DateTime(now.year, now.month, now.day));
+                  final enabled = inCurrentWeek && !weekend && !isPast;
                   return GestureDetector(
-                    onTap: weekend && !selected
-                        ? null
-                        : () {
+                    onTap: enabled
+                        ? () {
                             controller.selectedDate = day;
                             setState(() => _showDatePicker = false);
                             controller.loadDataForDate(day);
-                          },
+                          }
+                        : null,
                     child: Center(
                       child: Container(
                         width: 36,
@@ -611,15 +637,13 @@ class _MainScreenState extends State<MainScreen> {
                             style: TextStyle(
                               color: selected
                                   ? Colors.white
-                                  : (weekend
-                                      ? AppColors.textHint
-                                      : (isToday
-                                          ? AppColors.primary
-                                          : AppColors.textPrimary)),
-                              fontWeight: selected || isToday
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                            ),
+                                  : (enabled
+                                      ? AppColors.textPrimary
+                                      : AppColors.textHint),
+                                fontWeight: selected || isToday
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
                           ),
                         ),
                       ),

@@ -372,13 +372,13 @@ class _SpecialItemsScreenState extends State<SpecialItemsScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _menuItem('Rotina do dia', () {
+                _menuItem(Icons.today, 'Rotina do dia', () {
                   setState(() => _showMenu = false);
                   Navigator.of(context).pushNamedAndRemoveUntil(
                       'Main', (route) => false);
                 }),
-                _menuItem('Itens sem venda', () => _handleMenuOption('unsold')),
-                _menuItem('Itens sem histórico de venda',
+                _menuItem(Icons.shopping_cart_outlined, 'Itens sem venda', () => _handleMenuOption('unsold')),
+                _menuItem(Icons.history, 'Itens sem histórico de venda',
                     () => _handleMenuOption('no_sales_history')),
               ],
             ),
@@ -388,15 +388,23 @@ class _SpecialItemsScreenState extends State<SpecialItemsScreen> {
     );
   }
 
-  Widget _menuItem(String label, VoidCallback onTap) {
+  Widget _menuItem(IconData icon, String label, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-        child: Text(label,
-            style: const TextStyle(
-                fontSize: 15, color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.primary, size: 24),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(label,
+                  style: const TextStyle(
+                      fontSize: 17, color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+            ),
+          ],
+        ),
       ),
     );
   }
