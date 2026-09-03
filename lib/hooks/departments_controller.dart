@@ -37,18 +37,22 @@ class DepartmentsController with ChangeNotifier {
       final storageDate = formatStorageDate(date);
       final items = await getItems(dateApi);
 
+      // Batch load: carrega todas as respostas salvas para a data de uma vez
+      final cached = await Session.loadTreatmentsForDate(storageDate);
+
       final merged = <Department>[];
       for (final dept in items) {
-        final itemsWithCode = <Item>[];
-        for (final item in dept.items) {
-          final base = item.copyWith(departmentCode: dept.department.code);
-          final applied = await Session.applyToItem(storageDate, base);
-          itemsWithCode.add(applied.copyWith(
-            treated:
-                applied.treated || (applied.answers?.isNotEmpty ?? false),
-          ));
-        }
-        merged.add(Department(department: dept.department, items: itemsWithCode));
+        final itemsWithCode = dept.items
+            .map((item) => item.copyWith(departmentCode: dept.department.code))
+            .toList();
+        final applied = Session.applyTreatments(storageDate, itemsWithCode, cached);
+        merged.add(Department(
+          department: dept.department,
+          items: applied
+              .map((i) =>
+                  i.copyWith(treated: i.treated || (i.answers?.isNotEmpty ?? false)))
+              .toList(),
+        ));
       }
       _allDepartments = merged;
       _departments = merged;

@@ -30,7 +30,10 @@ class _ProductCardState extends State<ProductCard> {
   }
 
   void _handleCardPress() {
-    if (widget.blocked) return;
+    if (widget.blocked) {
+      _showBlockedDialog();
+      return;
+    }
     if (widget.item.treated) {
       widget.onShowBadge(widget.item);
       return;
@@ -39,12 +42,44 @@ class _ProductCardState extends State<ProductCard> {
   }
 
   void _handleStatusPress() {
-    if (widget.blocked) return;
+    if (widget.blocked) {
+      _showBlockedDialog();
+      return;
+    }
     if (widget.item.treated) {
       widget.onShowBadge(widget.item);
     } else {
       widget.onEdit(widget.item);
     }
+  }
+
+  void _showBlockedDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Row(
+          children: [
+            Icon(Icons.lock_clock, color: AppColors.primary, size: 22),
+            SizedBox(width: 8),
+            Text('Item bloqueado',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          'O tratamento de itens está bloqueado até as 08h, '
+          'aguardando atualização dos dados de estoque e venda.',
+          style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('ENTENDI',
+                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

@@ -162,4 +162,47 @@ class Session {
       answers: mergedAnswers,
     );
   }
+
+  /// Carrega todas as respostas salvas para uma data de uma vez só.
+  /// Retorna um Map<ean, StoredTreatment>.
+  static Future<Map<String, StoredTreatment>> loadTreatmentsForDate(
+      String date) async {
+    final prefs = await _instance;
+    final raw = prefs.getString(_treatmentKey);
+    if (raw == null || raw.isEmpty) return {};
+    final map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+    final result = <String, StoredTreatment>{};
+    final prefix = '$date:';
+    for (final entry in map.entries) {
+      if (entry.key.startsWith(prefix)) {
+        final ean = entry.key.substring(prefix.length);
+        result[ean] =
+            StoredTreatment.fromJson(entry.value as Map<String, dynamic>);
+      }
+    }
+    return result;
+  }
+
+  /// Aplica respostas salvas a uma lista de itens usando o map pré-carregado.
+  static List<Item> applyTreatments(
+      String date, List<Item> items, Map<String, StoredTreatment> cached) {
+    return items.map((item) {
+      final stored = cached[item.ean];
+      if (stored == null || !stored.treated) return item;
+      final mergedAnswers =
+          stored.answers != null && stored.answers!.isNotEmpty
+              ? stored.answers
+              : (item.answers != null &&
+                      item.answers!.isNotEmpty &&
+                      !_hasInvalidApiAnswers(item)
+                  ? item.answers
+                  : item.answers);
+      return item.copyWith(
+        treated: true,
+        treatedAt: stored.treatedAt ?? item.treatedAt,
+        treatedBy: stored.treatedBy ?? item.treatedBy,
+        answers: mergedAnswers,
+      );
+    }).toList();
+  }
 }
