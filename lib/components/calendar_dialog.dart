@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:rotina_comercial/hooks/departments_controller.dart';
 import 'package:rotina_comercial/theme.dart';
 import 'package:rotina_comercial/utils/time.dart';
@@ -35,83 +34,12 @@ class CalendarDialog extends StatelessWidget {
     final daysInMonth = DateTime(selected.year, selected.month + 1, 0).day;
     final leading = first.weekday % 7;
 
-    final weekRange = getWeekRange(now);
-    final weekStart = weekRange.monday;
-    final weekEnd = weekRange.friday;
-
-    final cells = <String>[];
-    for (var i = 0; i < leading; i++) {
-      final prevDay = DateTime(selected.year, selected.month, 1 - i);
-      cells.add('muted:${prevDay.day}');
-    }
+    final cells = <DateTime?>[];
+    for (var i = 0; i < leading; i++) cells.add(null);
     for (var d = 1; d <= daysInMonth; d++) {
-      final day = DateTime(selected.year, selected.month, d);
-      final isToday = sameDay(day, now);
-      final isSel = sameDay(day, selected);
-      final weekday = day.weekday;
-      final isWeekday = weekday >= DateTime.monday && weekday <= DateTime.friday;
-
-      if (isSel) {
-        cells.add('selected:$d');
-      } else if (!isWeekday) {
-        cells.add('muted:$d');
-      } else {
-        cells.add('active:$d');
-      }
+      cells.add(DateTime(selected.year, selected.month, d));
     }
-    final remaining = 7 - (cells.length % 7);
-    if (remaining < 7) {
-      for (var i = 1; i <= remaining; i++) {
-        cells.add('muted:$i');
-      }
-    }
-
-    final gridHtml = cells.map((cell) {
-      final parts = cell.split(':');
-      final type = parts[0];
-      final day = parts[1];
-      if (type == 'selected') {
-        return '<div class="day"><span class="selected">$day</span></div>';
-      } else if (type == 'muted') {
-        return '<div class="day muted">$day</div>';
-      } else {
-        return '<div class="day">$day</div>';
-      }
-    }).join('');
-
-    final weekHeader = weekDays.map((d) => '<div>$d</div>').join();
-
-    final html = '''
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,Helvetica,sans-serif;background:transparent;color:#050505}
-.calendar{width:100%;background:#fff;border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
-.head{display:flex;align-items:center;justify-content:center;padding:18px 16px;border-bottom:1px solid #bbb;position:relative}
-.month{font-size:20px;font-weight:600}
-.back{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:28px;font-weight:300;color:#111;padding:8px}
-.week{display:grid;grid-template-columns:repeat(7,1fr);height:40px;align-items:center;border-bottom:1px solid #bbb;font-size:13px;font-weight:600;text-align:center;color:#888}
-.grid{display:grid;grid-template-columns:repeat(7,1fr);padding:6px 10px 10px;gap:2px}
-.day{display:flex;align-items:center;justify-content:center;height:40px;font-size:15px;font-weight:400}
-.muted{color:#c9c9c9}
-.selected{width:38px;height:38px;background:#ff1010;color:#fff;border-radius:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
-</style>
-</head>
-<body>
-<section class="calendar">
-  <header class="head">
-    <div class="back">‹</div>
-    <div class="month">$monthName $year</div>
-  </header>
-  <div class="week">$weekHeader</div>
-  <div class="grid">$gridHtml</div>
-</section>
-</body>
-</html>
-''';
+    while (cells.length % 7 != 0) cells.add(null);
 
     return Stack(
       children: [
@@ -124,23 +52,90 @@ body{font-family:Arial,Helvetica,sans-serif;background:transparent;color:#050505
             onTap: () {},
             child: Container(
               width: double.infinity,
-              constraints: const BoxConstraints(maxWidth: 380),
+              constraints: const BoxConstraints(maxWidth: 360),
               margin: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x38000000),
-                    blurRadius: 15,
-                    offset: Offset(0, 5),
-                  ),
+                  BoxShadow(color: Color(0x38000000), blurRadius: 15, offset: Offset(0, 5)),
                 ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  HtmlWidget(html),
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: const BoxDecoration(
+                      border: Border(bottom: BorderSide(color: Color(0xFFCCCCCC))),
+                    ),
+                    child: Center(
+                      child: Text('$monthName $year',
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF050505))),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Row(
+                      children: weekDays.map((d) => Expanded(
+                        child: Center(
+                          child: Text(d, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF888888))),
+                        ),
+                      )).toList(),
+                    ),
+                  ),
+                  const Divider(height: 1, color: Color(0xFFCCCCCC)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: GridView.count(
+                      crossAxisCount: 7,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      childAspectRatio: 1,
+                      children: cells.map((day) {
+                        if (day == null) return const SizedBox.shrink();
+                        final isToday = sameDay(day, now);
+                        final isSel = sameDay(day, selected);
+                        final weekday = day.weekday;
+                        final isWeekday = weekday >= DateTime.monday && weekday <= DateTime.friday;
+                        final enabled = isWeekday;
+
+                        return Center(
+                          child: GestureDetector(
+                            onTap: enabled ? () {
+                              controller.selectedDate = day;
+                              controller.loadDataForDate(day);
+                              onClose();
+                            } : null,
+                            child: Container(
+                              width: 38,
+                              height: 38,
+                              decoration: isSel
+                                  ? const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)
+                                  : (isToday
+                                      ? BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppColors.primary, width: 2))
+                                      : null),
+                              child: Center(
+                                child: Text(
+                                  '${day.day}',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: isSel || isToday ? FontWeight.w700 : FontWeight.w400,
+                                    color: isSel
+                                        ? Colors.white
+                                        : (enabled
+                                            ? (isToday ? AppColors.primary : const Color(0xFF050505))
+                                            : const Color(0xFFC9C9C9)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const Divider(height: 1, color: Color(0xFFCCCCCC)),
                   GestureDetector(
                     onTap: () {
                       final today = clampToWeekday(DateTime.now());
@@ -151,15 +146,9 @@ body{font-family:Arial,Helvetica,sans-serif;background:transparent;color:#050505
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: const BoxDecoration(
-                        border: Border(top: BorderSide(color: Color(0xFFBBBBBB))),
-                      ),
                       child: const Center(
                         child: Text('Ir para hoje',
-                            style: TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15)),
+                            style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 15)),
                       ),
                     ),
                   ),
