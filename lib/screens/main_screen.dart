@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:rotina_comercial/api/endpoints.dart';
 import 'package:rotina_comercial/auth/auth_provider.dart';
+import 'package:rotina_comercial/components/calendar_dialog.dart';
 import 'package:rotina_comercial/components/checklist_modal.dart';
 import 'package:rotina_comercial/components/department_card.dart';
+import 'package:rotina_comercial/components/profile_dialog.dart';
 import 'package:rotina_comercial/components/success_toast.dart';
 import 'package:rotina_comercial/components/treatment_badge_modal.dart';
 import 'package:rotina_comercial/hooks/departments_controller.dart';
+import 'package:rotina_comercial/storage/session.dart';
 import 'package:rotina_comercial/theme.dart';
 import 'package:rotina_comercial/types.dart';
 import 'package:rotina_comercial/utils/time.dart';
@@ -24,11 +27,12 @@ class _MainScreenState extends State<MainScreen> {
   late bool _blocked;
   final _queryController = TextEditingController();
   bool _showMenu = false;
-  bool _showLogout = false;
   bool _showExit = false;
   bool _showDatePicker = false;
   bool _searching = false;
-  late DateTime _calendarMonth;
+  bool _showProfile = false;
+  String _userEmail = '';
+  String _userStore = '';
   Item? _checklistItem;
   Item? _badgeItem;
   bool _showSuccessToast = false;
@@ -38,8 +42,6 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _blocked = isBlocked();
-    final now = DateTime.now();
-    _calendarMonth = DateTime(now.year, now.month, 1);
   }
 
   @override
@@ -49,11 +51,23 @@ class _MainScreenState extends State<MainScreen> {
     if (!_loaded) {
       _loaded = true;
       controller.loadData();
+      _loadUserData();
     }
     final success = controller.successMessage;
     if (success != null) {
       _showSuccessToast = true;
       controller.clearSuccessMessage();
+    }
+  }
+
+  Future<void> _loadUserData() async {
+    final email = await Session.getSavedEmail();
+    final storeCode = await Session.getUserName();
+    if (mounted) {
+      setState(() {
+        _userEmail = email;
+        _userStore = storeCode;
+      });
     }
   }
 
@@ -72,8 +86,8 @@ class _MainScreenState extends State<MainScreen> {
           setState(() => _showMenu = false);
           return false;
         }
-        if (_showLogout) {
-          setState(() => _showLogout = false);
+        if (_showProfile) {
+          setState(() => _showProfile = false);
           return false;
         }
         if (_showExit) return false;
@@ -117,9 +131,25 @@ class _MainScreenState extends State<MainScreen> {
             ),
             if (_showMenu) _menuOverlay(context),
             if (_showExit) _exitDialog(),
-            if (_showLogout) _logoutDialog(context),
+            if (_showProfile)
+              ProfileDialog(
+                visible: _showProfile,
+                userName: context.read<AuthProvider>().userName,
+                email: _userEmail,
+                store: _userStore,
+                onClose: () => setState(() => _showProfile = false),
+                onLogout: () async {
+                  setState(() => _showProfile = false);
+                  showToast('👋 Deslogado com sucesso!');
+                  await context.read<AuthProvider>().logout();
+                },
+              ),
             if (_showDatePicker)
-              _datePickerSheet(context, controller),
+              CalendarDialog(
+                visible: _showDatePicker,
+                controller: controller,
+                onClose: () => setState(() => _showDatePicker = false),
+              ),
             ChecklistModal(
               visible: _checklistItem != null,
               item: _checklistItem,
@@ -174,7 +204,7 @@ class _MainScreenState extends State<MainScreen> {
             ),
           ),
           GestureDetector(
-            onTap: () => setState(() => _showLogout = true),
+            onTap: () => setState(() => _showProfile = true),
             child: Container(
               width: 32,
               height: 32,
@@ -210,8 +240,6 @@ class _MainScreenState extends State<MainScreen> {
           GestureDetector(
             onTap: () => setState(() {
                   _showDatePicker = true;
-                  _calendarMonth =
-                      DateTime(controller.selectedDate.year, controller.selectedDate.month, 1);
                 }),
             child: Row(
               children: [
@@ -236,8 +264,6 @@ class _MainScreenState extends State<MainScreen> {
           GestureDetector(
             onTap: () => setState(() {
                   _showDatePicker = true;
-                  _calendarMonth =
-                      DateTime(controller.selectedDate.year, controller.selectedDate.month, 1);
                 }),
             child: Row(
               children: [
@@ -439,21 +465,6 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Widget _logoutDialog(BuildContext context) {
-    return _centerDialog(
-      'Sair da conta',
-      'Deseja realmente sair da sua conta?',
-      'Cancelar',
-      'Sair',
-      () => setState(() => _showLogout = false),
-      () async {
-        setState(() => _showLogout = false);
-        showToast('👋 Deslogado com sucesso!');
-        await context.read<AuthProvider>().logout();
-      },
-    );
-  }
-
   Widget _centerDialog(String title, String message, String cancelLabel,
       String confirmLabel, VoidCallback onCancel, VoidCallback onConfirm) {
     return Container(
@@ -513,161 +524,6 @@ class _MainScreenState extends State<MainScreen> {
                     ),
                   ),
                 ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _datePickerSheet(BuildContext context, DepartmentsController controller) {
-    const weekShort = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
-    const months = [
-      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-    ];
-    final first = DateTime(_calendarMonth.year, _calendarMonth.month, 1);
-    final daysInMonth =
-        DateTime(_calendarMonth.year, _calendarMonth.month + 1, 0).day;
-    final leading = first.weekday % 7;
-    final cells = <DateTime?>[];
-    for (var i = 0; i < leading; i++) cells.add(null);
-    for (var d = 1; d <= daysInMonth; d++) {
-      cells.add(DateTime(_calendarMonth.year, _calendarMonth.month, d));
-    }
-    while (cells.length % 7 != 0) cells.add(null);
-
-    final now = DateTime.now();
-    final weekRange = getWeekRange(now);
-    final weekStart = weekRange.monday;
-    final weekEnd = weekRange.friday;
-
-    return Container(
-      color: const Color(0x66000000),
-      child: Center(
-        child: Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(maxWidth: 340),
-          margin: const EdgeInsets.all(24),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left, color: AppColors.primary),
-                    onPressed: () => setState(() {
-                      _calendarMonth = DateTime(
-                          _calendarMonth.year, _calendarMonth.month - 1, 1);
-                    }),
-                  ),
-                  Text('${months[_calendarMonth.month - 1]} ${_calendarMonth.year}',
-                      style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary)),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right, color: AppColors.primary),
-                    onPressed: () => setState(() {
-                      _calendarMonth = DateTime(
-                          _calendarMonth.year, _calendarMonth.month + 1, 1);
-                    }),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: weekShort
-                    .map((w) => Expanded(
-                          child: Center(
-                            child: Text(w,
-                                style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textMuted)),
-                          ),
-                        ))
-                    .toList(),
-              ),
-              const SizedBox(height: 8),
-              GridView.count(
-                crossAxisCount: 7,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: 1,
-                children: cells.map((day) {
-                  if (day == null) return const SizedBox.shrink();
-                  final weekend = day.weekday == 6 || day.weekday == 7;
-                  final selected = sameDay(day, controller.selectedDate);
-                  final isToday = sameDay(day, DateTime.now());
-                  final inCurrentWeek = !day.isBefore(weekStart) && !day.isAfter(weekEnd);
-                  final isPast = day.isBefore(DateTime(now.year, now.month, now.day));
-                  final enabled = inCurrentWeek && !weekend && !isPast;
-                  return GestureDetector(
-                    onTap: enabled
-                        ? () {
-                            controller.selectedDate = day;
-                            setState(() => _showDatePicker = false);
-                            controller.loadDataForDate(day);
-                          }
-                        : null,
-                    child: Center(
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: selected
-                            ? const BoxDecoration(
-                                color: AppColors.primary, shape: BoxShape.circle)
-                            : (isToday
-                                ? BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: AppColors.primary),
-                                  )
-                                : null),
-                        child: Center(
-                          child: Text(
-                            '${day.day}',
-                            style: TextStyle(
-                              color: selected
-                                  ? Colors.white
-                                  : (enabled
-                                      ? AppColors.textPrimary
-                                      : AppColors.textHint),
-                                fontWeight: selected || isToday
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: () => setState(() => _showDatePicker = false),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F3F4),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  child: const Center(
-                    child: Text('Fechar',
-                        style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w600)),
-                  ),
-                ),
               ),
             ],
           ),

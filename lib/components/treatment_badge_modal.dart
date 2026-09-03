@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:rotina_comercial/theme.dart';
 import 'package:rotina_comercial/types.dart';
 import 'package:rotina_comercial/utils/time.dart';
@@ -25,6 +26,48 @@ class TreatmentBadgeModal extends StatelessWidget {
     final treatedBy = it.treatedBy ?? userName;
     final answers = it.answers;
 
+    final rowsHtml = answers != null
+        ? shortQuestions.asMap().entries.map((e) {
+            final answer = answers.firstWhere(
+                (a) => a.number == e.key + 1,
+                orElse: () => TreatedAnswer(
+                    question: '', number: e.key + 1, items: 0, percentage: 0));
+            final active = isTreatedAnswerActive(answer);
+            final isNeutral = !active && (answer.items == 0 && answer.percentage == 0);
+            final icon = isNeutral ? '⊘' : (active ? '✓' : '×');
+            final cls = isNeutral ? 'neutral' : (active ? 'ok' : 'no');
+            return '<div class="row"><span class="icon $cls">$icon</span><span>${e.key + 1} - ${shortQuestions[e.key]}</span></div>';
+          }).join()
+        : '<div class="row"><span class="text-muted">Detalhes indisponíveis</span></div>';
+
+    final html = '''
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:transparent;color:#090909}
+.label{font-size:16px;font-weight:700;line-height:1.25;margin:0 0 2px}
+.value{font-size:15px;line-height:1.3;margin:0 0 15px}
+.responses{margin-top:4px}
+.row{display:flex;align-items:flex-start;gap:10px;margin:6px 0;font-size:14px;line-height:1.38}
+.icon{flex:0 0 24px;font-size:18px;font-weight:700;line-height:1.1;text-align:center}
+.ok{color:#43b75f}.no{color:#e6294f}.neutral{color:#b8b8b8}
+.text-muted{color:#888}
+</style>
+</head>
+<body>
+  <p class="label">Tratado por:</p>
+  <p class="value">$treatedBy</p>
+  <p class="label">Data/hora:</p>
+  <p class="value">$treatedAt</p>
+  <p class="label">Respostas:</p>
+  <div class="responses">$rowsHtml</div>
+</body>
+</html>
+''';
+
     return Stack(
       children: [
         GestureDetector(
@@ -37,111 +80,52 @@ class TreatmentBadgeModal extends StatelessWidget {
             child: Container(
               width: double.infinity,
               constraints: BoxConstraints(
-                maxWidth: 340,
+                maxWidth: 380,
                 maxHeight: MediaQuery.of(context).size.height * 0.8,
               ),
               margin: const EdgeInsets.all(24),
-              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Tratamento',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary)),
-                  const SizedBox(height: 12),
-                  _row('Tratado por:', treatedBy),
-                  _row('Data/hora:', treatedAt),
-                  const Text('Respostas:',
-                      style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
-                  Flexible(
-                    child: SingleChildScrollView(
-                      child: answers != null
-                          ? Column(
-                              children: shortQuestions.asMap().entries.map((e) {
-                                final answer = answers.firstWhere(
-                                    (a) => a.number == e.key + 1,
-                                    orElse: () => TreatedAnswer(
-                                        question: '',
-                                        number: e.key + 1,
-                                        items: 0,
-                                        percentage: 0));
-                                final active = isTreatedAnswerActive(answer);
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        active ? '✓' : '×',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color: active
-                                              ? const Color(0xFF4CAF50)
-                                              : const Color(0xFFD32F2F),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          '${e.key + 1} - ${shortQuestions[e.key]}',
-                                          style: const TextStyle(
-                                            fontSize: 12, color: Color(0xFF333333)),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                            )
-                          : const Text('Detalhes indisponíveis',
-                              style: TextStyle(fontSize: 14, color: AppColors.textHint)),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  GestureDetector(
-                    onTap: onClose,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      child: const Center(
-                        child: Text('Fechar',
-                            style: TextStyle(
-                                color: Colors.white, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
+                color: const Color(0xFFFFF9E9),
+                borderRadius: BorderRadius.circular(23),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(28),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Html(data: html),
+                    const SizedBox(height: 16),
+                    GestureDetector(
+                      onTap: onClose,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Center(
+                          child: Text('Fechar',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _row(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(value,
-              style: const TextStyle(
-                  fontSize: 14, color: Color(0xFF333333), fontWeight: FontWeight.w600)),
         ),
       ],
     );
